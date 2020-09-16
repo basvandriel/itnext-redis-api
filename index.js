@@ -18,5 +18,24 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+//  Endpoint:  GET /starships/:id
+//  @desc Return Starships data for particular starship id
+app.get("/starships/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const starShipInfo = await axios.get(
+            `https://swapi.dev/api/starships/${id}`
+        );
+
+        //get data from response
+        const starShipInfoData = starShipInfo.data;
+
+        return res.json(starShipInfoData);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json(error);
+    }
+});
+
 //listen on port 5000;
 app.listen(port, () => console.log(`Server running on Port ${port}`));
