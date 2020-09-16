@@ -18,9 +18,23 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Middleware function to check cache
+checkCache = (request, response, next) => {
+    const { id } = request.params;
+
+    redis_client.get(id, (error, data) => {
+        if (error) {
+            console.log(error);
+            res.status(500).send(error);
+        }
+
+        data != null ? response.send(data) : next();
+    });
+}
+
 //  Endpoint:  GET /starships/:id
 //  @desc Return Starships data for particular starship id
-app.get("/starships/:id", async (req, res) => {
+app.get("/starships/:id", checkCache, async (req, res) => {
     try {
         const { id } = req.params;
         const starShipInfo = await axios.get(
@@ -29,6 +43,9 @@ app.get("/starships/:id", async (req, res) => {
 
         //get data from response
         const starShipInfoData = starShipInfo.data;
+
+        //add data to Redis
+        redis_client.setex(id, 3600, JSON.stringify(starShipInfoData));
 
         return res.json(starShipInfoData);
     } catch (error) {
